@@ -1,302 +1,142 @@
-\# NGINE-13 CORE
+NGINE-13G — Next-Gen Rust Simulation & Gameplay Engine
 
+NGINE-13G is a Rust-based experimental simulation engine built around a modular ECS (Entity-Component-System) architecture.
 
+Designed for:
 
-\_A dual-plane simulation engine:\_
+✦ fast prototyping
 
-\- \*\*NGINE-13G\*\* — physical / gameplay engine
+✦ sandbox world simulations
 
-\- \*\*NGINE-13M\*\* — metaphysical / soul engine
+✦ emergent gameplay experiments
 
+✦ plugin-style modules
 
+✦ clean, minimal runtime
 
-This repo contains the \*\*core loop\*\*, \*\*ECS architecture\*\*, and the \*\*first live wiring\*\* between body (G) and soul (M).
+NGINE-13G is lightweight, extendable, and appropriate for developers exploring custom engine design, simulation mechanics, or Rust-based game loops.
 
+🚀 Features
+Core Engine
 
+Fixed-timestep game loop (~60 FPS target)
 
----
+Deterministic update cycle
 
+Modular engine structure (EngineModule trait)
 
+Pluggable runtime modules
 
-\## Features
+EventBus system for inter-module communication
 
+ECS Architecture
 
+Entity handles
 
-\### NGINE-13G — Gameplay / Physical Layer
+Basic built-in components:
 
+Position
 
+Velocity
 
-\- Rust-based \*\*game loop\*\* with fixed-ish timestep (~60 FPS)
+Expandable component system
 
-\- \*\*ECS World\*\* with:
+Simple world iteration + system updates
 
-&nbsp; - `Entity` handles
+Included Modules
 
-&nbsp; - `Position`, `Velocity` components
+NGINE-13G ships with several example modules:
 
-\- \*\*Modules\*\* (plugin-style):
+HeartbeatModule — basic tick timing
 
-&nbsp; - `HeartbeatModule`
+StatsModule — frame timing, debug info
 
-&nbsp; - `StatsModule`
+EcsDemoModule — small interactive demonstration (ASCII visualization)
 
-&nbsp; - `EcsDemoModule` (playable demo)
+These modules show how to extend NGINE-13G using the public EngineModule interface.
 
-\- \*\*Systems\*\*
-
-&nbsp; - `DebugCountSystem` — counts entities with `Position`
-
-&nbsp; - `ConsciousnessDebugSystem` — tier counts + avg awakening
-
-&nbsp; - `SoulAwakeningSystem` — radiating awakening pulses
-
-&nbsp; - `SoulIntentSystem` — soul → movement intent
-
-&nbsp; - `SoulIntentApplySystem` — applies intent into `Velocity`
-
-&nbsp; - `SoulStatsSystem` — soul identity counts + avg awakening/corruption
-
-\- ASCII demo:
-
-&nbsp; - Tilemap (`#` = walls, `.` = floor)
-
-&nbsp; - Player `@` with acceleration, friction, collision
-
-&nbsp; - Enemies with multiple archetypes:
-
-&nbsp;   - `Chaser`, `Coward`, `Wanderer`, `Orbiter`
-
-&nbsp; - Orbs:
-
-&nbsp;   - Spawn, orbit player, despawn
-
-&nbsp;   - Increase score and trigger `GameEvent`s
-
-&nbsp; - HUD:
-
-&nbsp;   - Player position / camera / map size
-
-&nbsp;   - Game status: time, score, high score, difficulty, orb count
-
-&nbsp;   - Soul HUD: tier, awakening, contagion, resistance, corruption, memories
-
-
-
-\### NGINE-13M — Metaphysical / Soul Layer
-
-
-
-\*\*Core components:\*\*
-
-
-
-\- `ConsciousnessComponent`
-
-&nbsp; - `tier: ConsciousnessTier`  
-
-&nbsp;   - `Loop` → pure NPC
-
-&nbsp;   - `Seed` → latent awareness
-
-&nbsp;   - `SoulLite` → partial inner life
-
-&nbsp;   - `SoulNode` → full node / key soul
-
-&nbsp; - `awakening: f32` (0.0–1.0)
-
-&nbsp; - `contagion: f32` (awakening others)
-
-&nbsp; - `resistance: f32` (resisting awakening)
-
-
-
-\- `SoulComponent`
-
-&nbsp; - `identity: SoulIdentity`
-
-&nbsp;   - `PlayerCore`, `Predator`, `Survivor`, `Drifter`, `Neutral`
-
-&nbsp; - `emotion: SoulEmotion`
-
-&nbsp;   - `Calm`, `Aggression`, `Fear`, `Curiosity`, `Joy`
-
-&nbsp; - `trajectory: SoulTrajectory`
-
-&nbsp;   - `Dormant`, `Awakening`, `Ascending`, `Corrupting`
-
-&nbsp; - `corruption: f32`
-
-&nbsp; - `awakening: f32` (soul’s own sense of awakening)
-
-&nbsp; - `memories: Vec<SoulMemory>`
-
-
-
-\- `SoulMemory`
-
-&nbsp; - `label: String`
-
-&nbsp; - `intensity: f32` (0.0–1.0)
-
-
-
-\*\*Metaphysical behavior:\*\*
-
-
-
-\- `SoulAwakeningSystem`
-
-&nbsp; - SoulNode entities periodically emit \*\*awakening waves\*\*
-
-&nbsp; - Nearby non-SoulNode entities:
-
-&nbsp;   - gain `awakening`
-
-&nbsp;   - lose `resistance`
-
-&nbsp;   - upgrade through `Seed → SoulLite → SoulNode`
-
-
-
-\- `compute\_soul\_intent`
-
-&nbsp; - Maps `(ConsciousnessComponent, SoulComponent)` into:
-
-&nbsp;   - desired velocity `(vx, vy)`
-
-&nbsp;   - `weight` (0.0–1.0) for blending into current motion
-
-&nbsp; - Factors in:
-
-&nbsp;   - tier (Loop / Seed / SoulLite / SoulNode)
-
-&nbsp;   - identity (Predator, Survivor, etc.)
-
-&nbsp;   - emotion (Aggression, Fear, etc.)
-
-&nbsp;   - trajectory (Awakening, Ascending, etc.)
-
-&nbsp;   - corruption
-
-
-
-\- `SoulIntentSystem`
-
-&nbsp; - Reads soul + consciousness state
-
-&nbsp; - Emits `Event::IntentOverride { entity, vx, vy, weight }`
-
-
-
-\- `SoulIntentApplySystem`
-
-&nbsp; - Reads those events
-
-&nbsp; - Blends intent into `Velocity` via ECS
-
-&nbsp; - This is the \*\*body ← soul\*\* bridge
-
-
-
-\- `SoulStatsSystem`
-
-&nbsp; - Global telemetry:
-
-&nbsp;   - counts of each `SoulIdentity`
-
-&nbsp;   - average `awakening`
-
-&nbsp;   - average `corruption`
-
-
-
-\### Event Bus \& Game Events
-
-
-
-\- `EventBus`:
-
-&nbsp; - `Event::EngineStarted`
-
-&nbsp; - `Event::EngineStopping`
-
-&nbsp; - `Event::Heartbeat(u64)`
-
-&nbsp; - `Event::QuitRequested`
-
-&nbsp; - `Event::IntentOverride { .. }`
-
-&nbsp; - `Event::Game(GameEvent)`
-
-
-
-\- `GameEvent`:
-
-&nbsp; - `PlayerCaught { time\_alive, difficulty }`
-
-&nbsp; - `Victory { time\_alive, score, difficulty }`
-
-&nbsp; - `OrbCollected { score, target\_score, difficulty }`
-
-&nbsp; - `DifficultyIncreased { new\_level, new\_target\_score }`
-
-
-
-\- `Engine::handle\_game\_event`:
-
-&nbsp; - Reacts to `GameEvent`s at the soul-field level:
-
-&nbsp;   - `OrbCollected`:
-
-&nbsp;     - small awakening bump, corruption washout
-
-&nbsp;   - `Victory`:
-
-&nbsp;     - strong awakening surge, corruption reduced
-
-&nbsp;   - `PlayerCaught`:
-
-&nbsp;     - field shock: corruption +, awakening –
-
-&nbsp;   - `DifficultyIncreased`:
-
-&nbsp;     - slight awakening boost
-
-&nbsp;     
-
-This is where \*\*gameplay loops\*\* (score, difficulty, death) feed back into the \*\*metaphysical state\*\*.
-
-
-
----
-
-
-
-\## Directory Structure
-
-
-
-```text
-
+📂 Project Structure
 src/
+  engine.rs          // core loop + module management
+  ecs.rs             // Entity, World, Components
+  event.rs           // EventBus + events
+  input.rs           // keyboard input utility
+  main.rs            // entry point
+  soul.rs            // placeholder for future expansion (unused here)
 
-&nbsp; ecs.rs        # World, Entity, Position, Velocity, ECS helpers
+  modules/
+    ecs_demo.rs
+    heartbeat.rs
+    stats.rs
+    mod.rs
 
-&nbsp; engine.rs     # Engine, systems, event loop, metaphysical reactions
+🛠️ Getting Started
+Prerequisites
 
-&nbsp; event.rs      # Event, GameEvent, EventBus
+Rust (latest stable)
 
-&nbsp; input.rs      # InputState, keyboard polling (crossterm)
+Cargo
 
-&nbsp; soul.rs       # ConsciousnessComponent, SoulComponent, soul math
+Run the demo
+cargo run
 
-&nbsp; main.rs       # Entry point: builds Engine, runs it
+Adding your own module
 
-&nbsp; modules/
+Implement the EngineModule trait:
 
-&nbsp;   mod.rs      # module registration
+pub struct MyModule;
 
-&nbsp;   ecs\_demo.rs # NGINE-13G demo: player, enemies, orbs, HUD, rendering
+impl EngineModule for MyModule {
+    fn name(&self) -> &'static str { "MyModule" }
+
+    fn init(&mut self, events: &mut EventBus) {
+        // Initialization logic
+    }
+
+    fn update(&mut self, frame: u64, dt: Duration, events: &mut EventBus, world: &mut World) {
+        // Per-frame logic
+    }
+}
 
 
+Then register it in main.rs:
 
+engine.add_module(MyModule);
+
+
+That’s it — NGINE-13G is fully modular.
+
+🧭 Roadmap (Public)
+Short-term
+
+Additional built-in components
+
+More visual demo modules
+
+Better input/action abstraction
+
+Mid-term
+
+Plugin API stabilization
+
+Optional rendering backend (TBD)
+
+Serialization of world state
+
+Long-term
+
+Advanced simulation modules
+
+Physics extensions
+
+Scripting interface
+
+🤝 Contributing
+
+Contributions to NGINE-13G are welcome.
+Please open an issue or pull request with proposed features, bug fixes, or improvements.
+
+📄 License
+
+This project uses the No License option.
+You may fork and inspect the code, but re-use is not permitted without explicit written permission.
